@@ -1,7 +1,7 @@
 .. _tute_ss:
 
-LIBREOFFICE AND PYTHON TO WORK WITH EXCEL SPREADSHEETS 
-******************************************************
+USE LIBREOFFICE AND PYTHON TO WORK WITH EXCEL SPREADSHEETS
+**********************************************************
 
 .. cssclass:: screen_shot invert
 
@@ -10,7 +10,7 @@ LIBREOFFICE AND PYTHON TO WORK WITH EXCEL SPREADSHEETS
         :alt: Tutorial Image
         :figclass: align-center
 
-.. warning:: 
+.. warning::
 
     This document is a work in progress and many of the examples are not yet in full working order.
 
@@ -32,7 +32,7 @@ Each sheet has columns (addressed by letters starting at A) and rows (addressed 
 .. _tute_ss_install_odev:
 
 Installing |odev|
----------------
+-----------------
 
 Python does not come with |odev|, so you’ll have to install it. Follow the instructions in the |odev| :ref:`dev_doc` for installing the :ref:`dev_doc_virtulal_env`.
 
@@ -41,9 +41,9 @@ Python does not come with |odev|, so you’ll have to install it. Follow the ins
 Working with Python and LibreOffice
 -----------------------------------
 
-Note: Python is normally used by running script files, but it is an interpretive language executing line by line. This tutorial uses the REPL, an interactive python shell, so the user can execute a single Python command and get the result. New modules are normally loaded in the tutorial as they are needed but later they may appear at the top of the listing as normally used.
+Note: Python commands are normally run from a script file, but it is an interpretive language executing line by line. This tutorial uses the REPL, an interactive python shell, so the user can execute a single Python command and get the result. New modules are normally loaded in the tutorial as they are needed and in later usage loaded at the top of the listing as normally used.
 
-Note: Code in a section often required code earlier in the section to be executed beforehand but all the required code should be within the section. The names used for objects like the workbook and worksheet vary throughout the sections and a mix of plain arguments and keyword pairs are used.
+Note: Code in a section often required code earlier in the section to be run beforehand but all the required code should be in the section. The names used for objects like the workbook and worksheet vary throughout the sections and a mix of plain arguments and keyword pairs are used.
 
 Firstly, let us understand how python works with Office. An office instance is required before python can interact with the objects. When the python program is finished it is important to close any document and the Office instance or it will continue to run in the computer stopping other interfaces from starting it. This initialisation and finalisation code is required even if it is not shown in the examples.
 
@@ -54,10 +54,11 @@ Once |odev| is installed, start up a python shell and enter the following code i
     .. code-tab:: python
 
         >>> from ooodev.utils.lo import Lo
-        >>> loader = Lo.load_office(Lo.ConnectSocket(headless=True))
-        >>> # use the Office API...
+        >>> _ = Lo.load_office(Lo.ConnectSocket(headless=True, soffice="C:\\Program Files\\LibreOfficeDev 7\\program\\soffice.exe"))
+        >>> from ooodev.office.calc import Calc
+        >>> # do some work...
+        >>> wb = Calc.create_doc()
         >>> Lo.close_doc(wb)
-        >>> # generates an error if wb not open
         >>> Lo.close_office()
         True
 
@@ -70,7 +71,7 @@ Once |odev| is installed, start up a python shell and enter the following code i
 
 
 
-.. cssclass:: bg_light_gray, blue
+.. cssclass:: bg_light_gray, green
 
    As a comparison, elsewhere this might be done in a script with similar code to the following to close the loader and context manager automatically after it runs, even if there is an error:
 
@@ -80,9 +81,8 @@ Once |odev| is installed, start up a python shell and enter the following code i
 
         def main() -> int:
             with Lo.Loader(Lo.ConnectSocket(headless=True)) as loader:
+            # do some work...
             doc = Calc.create_doc(loader=loader)
-            sheet = Calc.get_sheet(doc=doc, index=0)
-            # do some work
             Lo.close_doc(doc=doc)
             return 0
 
@@ -97,15 +97,17 @@ Once |odev| is installed, start up a python shell and enter the following code i
             .. group-tab:: None
 
 
-Note: Similar commands are used to open with GUI:
+Note: Similar commands are used to open with GUI (not headless):
 
 .. tabs::
 
     .. code-tab:: python
 
         >>> from ooodev.utils.lo import Lo
+        >>> _ = Lo.load_office(Lo.ConnectSocket(soffice="C:\\Program Files\\LibreOfficeDev 7\\program\\soffice.exe"))
         >>> from ooodev.utils.gui import GUI
-        >>> _ = Lo.load_office(Lo.ConnectSocket())
+        >>> # after a document is instantiated...
+        >>> GUI.set_visible(True)
 
     .. only:: html
 
@@ -166,7 +168,7 @@ Now that we have our example spreadsheet, let’s see how we can manipulate it w
 .. _tute_ss_open_excel_doc_odev:
 
 Opening Excel Documents with |odev|
----------------------------------
+-----------------------------------
 
 Once you’ve installed the |odev| package, you’ll be able to use the Calc class. Enter the following into a new interactive shell:
 
@@ -174,11 +176,10 @@ Once you’ve installed the |odev| package, you’ll be able to use the Calc cla
 
     .. code-tab:: python
 
-        >>> from ooodev.utils.lo import Lo
-        >>> loader = Lo.load_office(Lo.ConnectSocket(headless=True, soffice="C:\\Program Files\\LibreOfficeDev 7\\program\\soffice.exe"))
-        >>>
         >>> from ooodev.office.calc import Calc
-        >>> wb = Calc.open_doc('example.xlsx', loader)
+        >>> from ooodev.utils.lo import Lo
+        >>> _ = Lo.load_office(Lo.ConnectSocket(headless=True, soffice="C:\\Program Files\\LibreOfficeDev 7\\program\\soffice.exe"))
+        >>> wb = Calc.open_doc('example.xlsx')
         >>> type(wb)
         <class 'pyuno'>
 
@@ -189,11 +190,11 @@ Once you’ve installed the |odev| package, you’ll be able to use the Calc cla
             .. group-tab:: None
 
 
-The Calc.open_doc() class takes in the filename and loader, and returns a value of the workbook data type.
+The :py:meth:`~.Calc.open_doc` class takes in the filename and loader, and returns a value of the workbook data type.
 This Workbook object represents the Excel file, a bit like how a File object represents an opened text file.
 
-Remember that example.xlsx needs to be in the current working directory in order for you to work with it.
-You can find out what the current working directory is by importing os and using os.getcwd(), and you can change the current working directory using os.chdir().
+Remember that ``example.xlsx`` needs to be in the current working directory in order for you to work with it.
+You can find out what the current working directory is by importing ``os`` and using ``os.getcwd()``, and you can change the current working directory using ``os.chdir()``.
 
 .. _tute_ss_get_sheet_wb:
 
@@ -212,7 +213,7 @@ Enter the following into the interactive shell:
         >>> ws = Calc.get_sheet(doc=wb, sheet_name='Sheet3')
         >>> Calc.get_sheet_name(ws)
         'Sheet3'
-        >>> ws2 = Calc.get_active_sheet(wb)
+        >>> ws2 = Calc.get_active_sheet()
         >>> Calc.get_sheet_name(ws2)
         'Sheet1'
 
@@ -228,7 +229,7 @@ Enter the following into the interactive shell:
 
 Each sheet is represented by a Worksheet object and you can use the Calc class to return it's properties.
 :py:meth:`~.Calc.get_sheet_names` will return all sheets in the workbook given as an argument.
-A particular Worksheet object is returned using :py:meth:`~.Calc.get_sheet` with the Workbook and sheet name string as arguments, and :py:meth:`~.Calc/get_sheet_name` with a Worksheet object argument returns teh Worksheet name.
+A particular Worksheet object is returned using :py:meth:`~.Calc.get_sheet` with the Workbook and sheet name string as arguments, and :py:meth:`~.Calc/get_sheet_name` with a Worksheet object argument returns the Worksheet name.
 Finally, you can use :py:meth:`~.Calc.get_active_sheet` of a Workbook object to get the workbook’s active sheet, and from there the name.
 The active sheet is the sheet that is displayed when the workbook is opened on your computer.
 
@@ -243,19 +244,19 @@ Once you have a Worksheet object, you can access a Cell object using the Calc cl
 
     .. code-tab:: python
 
-        >>> from ooodev.utils.lo import Lo
         >>> from ooodev.office.calc import Calc
-        >>> from ooodev.utils.gui import GUI
-        >>> from ooodev.utils.date_time_util import DateUtil
+        >>> from ooodev.utils.lo import Lo
         >>>
         >>> _ = Lo.load_office(Lo.ConnectSocket(soffice="C:\\Program Files\\LibreOfficeDev 7\\program\\soffice.exe"))
         >>> wb = Calc.open_doc('example.xlsx')
-        >>> GUI.set_visible(is_visible=True, doc=wb)
+        >>> from ooodev.utils.gui import GUI
+        >>> GUI.set_visible(is_visible=True, odoc=wb)
         >>>
         >>> ws = Calc.get_sheet(doc=wb, sheet_name='Sheet1')
         >>>
         >>> Calc.get_val(sheet=ws, cell_name="A1")
         42099.565300925926
+        >>> from ooodev.utils.date_time_util import DateUtil
         >>> DateUtil.date_from_number(Calc.get_val(sheet=ws, cell_name="A1"))
         datetime.datetime(2015, 4, 5, 13, 34, 2, tzinfo=datetime.timezone.utc)
         >>> str(DateUtil.date_from_number(Calc.get_val(sheet=ws, cell_name="A1")))
@@ -377,7 +378,7 @@ Enter the following into the interactive shell:
 
 
 After you import the :py:class:`.TableHelper` class from |odev| , you can use :py:meth:`~.Calc.make_column_name` and pass it an integer like ``27`` to figure out what the letter name of the ``27th`` column is.
-The function :py:meth:`~.Calc.column_index_string` does the reverse: you pass it the letter name of a column, and it tells you what number that column is. You don’t need to have a workbook loaded to use these functions. If you want, you can load a workbook, get a Worksheet object, and use a Worksheet property like max_column to get an integer. Then, you can pass that integer to get_column_letter().
+The function :py:meth:`~.Calc.column_index_string` does the reverse: you pass it the letter name of a column, and it tells you what number that column is. You don’t need to have a workbook loaded to use these functions. If you want, you can load a workbook, get a Worksheet object, and use a Worksheet property like max_column to get an integer. Then, you can pass that integer to :py:meth:`~.Calc.get_column_letter()`.
 
 .. _tute_ss_rows_cols_sheet:
 
@@ -540,7 +541,7 @@ Step 1: Read the Spreadsheet Data
 There is just one sheet in the ``censuspopdata.xlsx`` spreadsheet, named 'Population by Census Tract', and each row holds the data for a single census tract.
 The columns are the tract number ``A``, the state abbreviation ``B``, the county name ``C``, and the population of the tract ``D``.
 
-Open a new file editor tab and enter the following code. Save the file as ``readCensusExcel.py``.
+Open a new file editor tab and enter the following code. Save the file as ``readCensusExcel.py``. Now it's up to you, the best way to learn about efficient data processing is to run this code which will probably take about 20 minutes to process a huge amount of data. Alternatively you can skip this step and follow on.
 
 .. tabs::
 
@@ -554,12 +555,11 @@ Open a new file editor tab and enter the following code. Save the file as ``read
         from ooodev.utils.lo import Lo
         from ooodev.office.calc import Calc
         from ooodev.utils.gui import GUI
-        from ooodev.utils.date_time_util import DateUtil
 
-        _ = Lo.load_office(Lo.ConnectSocket())
+        _ = Lo.load_office(Lo.ConnectSocket(soffice="C:\Program Files\LibreOfficeDev 7\program\soffice.exe"))
         print('Opening workbook...')
         wb = Calc.open_doc('censuspopdata.xlsx')
-        GUI.set_visible(is_visible=True, doc=wb)
+        GUI.set_visible(is_visible=True, odoc=wb)
 
         sheet = Calc.get_sheet(doc=wb, sheet_name='Population by Census Tract')
         county_data = {}
@@ -650,8 +650,7 @@ More generally, the ``county_data`` dictionary’s keys will look like this:
             .. group-tab:: None
 
 
-Now that you know how ``county_data`` will be structured, you can write the code that will fill it with the county data.
-Add the following code to the bottom of your program:
+Now that you know how ``county_data`` will be structured, you can rewrite the code that will fill it with the county data. Replace the bottom of the program to fill in ``county_data`` with the following:
 
 .. tabs::
 
@@ -661,12 +660,14 @@ Add the following code to the bottom of your program:
         # readCensusExcel.py - Tabulates population and number of census tracts for
         # each county.
 
+        range_name = 'B2:D' + str(Calc.get_row_used_last_index(sheet)+1)
+        # print(range_name)
+        data = Calc.get_array(sheet=sheet, range_name=range_name)
+
         print('Reading rows...')
-        for row in range(2, Calc.get_row_used_last_index(sheet) + 2):
+        for i, row in enumerate(data):
             # Each row in the spreadsheet has data for one census tract.
-            state  = Calc.get_val(sheet, 'B' + str(row))
-            county = Calc.get_val(sheet, 'C' + str(row))
-            pop    = Calc.get_val(sheet, 'D' + str(row))
+            state, county, pop = row
             # Make sure the key for this state exists.
             _ = county_data.setdefault(state, {})
             # Make sure the key for this county in this state exists.
@@ -684,9 +685,15 @@ Add the following code to the bottom of your program:
 
             .. group-tab:: None
 
+Now we just skipped over the most important lesson of this whole tutorial.
+The old code used ``Calc.get_val()`` to read each cell and process it in a for loop, it works but it is very slow, it might take 20 minutes to run.
+We changed the code to use ``Calc.get_array``. It loads the data array into the computer memory and runs the for loop on that data. It is much more efficient, taking about 2 seconds to run.
+Lets just go over that again, you can use ``Calc.get_val()`` to process the data but it might be 500 times slower than ``Calc.get_array`` which reads it straight to RAM.
+Of course the actual times will vary by system but hopefully you understand the efficiency  ``get_aray`` can offer.
+
 The last two lines of code perform the actual calculation work, incrementing the value for tracts and increasing the value for pop for the current county on each iteration of the for loop.
 
-The other code is there because you cannot add a county dictionary as the value for a state abbreviation key until the key itself exists in ``county_data``
+The two lines of code before that are there because you cannot add a county dictionary as the value for a state abbreviation key until the key itself exists in ``county_data``
 (that is, ``county_data['AK']['Anchorage']['tracts'] += 1`` will cause an error if the ``AK`` key doesn’t exist yet).
 To make sure the state abbreviation key exists in your data structure, you need to call the ``setdefault()`` method to set a value if one does not already exist for state.
 
@@ -716,7 +723,7 @@ Add the following code to the bottom of your program (making sure to keep it uni
 
         # --snip--
 
-        for row in range(2, Calc.get_row_used_last_index(sheet)-1):
+        for i, row in enumerate(data):
         # --snip--
 
         # Open a new text file and write the contents of county_data to it.
@@ -731,9 +738,6 @@ Add the following code to the bottom of your program (making sure to keep it uni
         .. cssclass:: tab-none
 
             .. group-tab:: None
-
-
-        
 
 The ``pprint.pformat()`` function produces a string that itself is formatted as valid Python code.
 By outputting it to a text file named ``census2010.py``, you’ve generated a Python program from your Python program!
@@ -773,16 +777,15 @@ You can download the complete program from `<https://nostarch.com/automatestuff2
         >>> # readCensusExcel.py - Tabulates population and number of census tracts for
         >>> # each county.
         >>>
-        >>> import pprint
-        >>> from ooodev.utils.lo import Lo
         >>> from ooodev.office.calc import Calc
         >>> from ooodev.utils.gui import GUI
+        >>> from ooodev.utils.lo import Lo
         >>>
         >>> _ = Lo.load_office(Lo.ConnectSocket(soffice="C:\\Program Files\\LibreOfficeDev 7\\program\\soffice.exe"))
         >>> print('Opening workbook...')
         Opening workbook...
         >>> wb = Calc.open_doc('censuspopdata.xlsx')
-        >>> GUI.set_visible(is_visible=True, doc=wb)
+        >>> GUI.set_visible(is_visible=True, odoc=wb)
         >>>
         >>> sheet = Calc.get_sheet(doc=wb, sheet_name='Population by Census Tract')
         >>> county_data = {}
@@ -810,6 +813,7 @@ You can download the complete program from `<https://nostarch.com/automatestuff2
         >>> print('Writing results...')
         Writing results...
         >>> result_file = open('census2010B.py', 'w')
+        >>> import pprint
         >>> result_file.write('allData = ' + pprint.pformat(county_data))
         152237
         >>> result_file.close()
@@ -858,28 +862,6 @@ Writing Spreadsheet Documents
 |odev| also provides ways of writing data, meaning that your programs can create and edit spreadsheet files.
 With Python, it’s simple to create spreadsheets with thousands of rows of data.
 
-.. tabs::
-
-    .. code-tab:: python
-
-        >>> from ooodev.utils.lo import Lo
-        >>> loader = Lo.load_office(Lo.ConnectSocket(headless=True))
-        >>> # use the Office API... NOTE: Following lines raise an error
-        >>> Lo.close_doc(wb)
-        Closing the document
-        >>> Lo.close_office()
-        Closing Office
-        Office has already been requested to terminate
-        True
-
-    .. only:: html
-
-        .. cssclass:: tab-none
-
-            .. group-tab:: None
-
-.. _tute_ss_create_save_sheet_docs:
-
 Creating and Saving Spreadsheet Documents
 -----------------------------------------
 
@@ -890,24 +872,25 @@ Enter the following into the interactive shell:
 
     .. code-tab:: python
 
-        >>> from ooodev.utils.lo import Lo
-        >>> loader = Lo.load_office(Lo.ConnectSocket(headless=True))
-        >>>
         >>> from ooodev.office.calc import Calc
-        >>> wb = Calc.create_doc(loader=loader)
-        >>> ws = Calc.get_sheet(doc=wb, index=0)
-        >>> Calc.get_sheet_name(ws)
+        >>> from ooodev.utils.lo import Lo
+        >>> _ = Lo.load_office(Lo.ConnectSocket(headless=True, soffice="C:\Program Files\LibreOfficeDev 7\program\soffice.exe"))
+        >>>
+        >>> wb = Calc.create_doc()
+        >>> ws = Calc.get_sheet(wb)
+        >>> Calc.get_sheet_name()
         'Sheet1'
         >>> Calc.set_sheet_name(ws, 'Spam Bacon Eggs Sheet')
         True
-        >>> Calc.get_sheet_name(ws)
-        'Spam Bacon Eggs Sheet'
+        >>> Calc.get_sheet_name()
+        'Sheet1'
         >>> Calc.get_sheet_names(wb)
         ('Spam Bacon Eggs Sheet',)
-        >>> Calc.save_doc(wb, "foo.ods")
+        True
         >>>
         >>> Lo.close_doc(wb)
         >>> Lo.close_office()
+        True
 
     .. only:: html
 
@@ -926,15 +909,15 @@ Enter the following into the interactive shell (with ``example.xlsx`` in the cur
 
     .. code-tab:: python
 
-        >>> from ooodev.utils.lo import Lo
-        >>> loader = Lo.load_office(Lo.ConnectSocket(headless=True))
-        >>>
         >>> from ooodev.office.calc import Calc
-        >>> wb = Calc.open_doc('example.ods', loader)
-        >>> ws = Calc.get_sheet(wb, 0)
+        >>> from ooodev.utils.lo import Lo
+        >>> _ = Lo.load_office(Lo.ConnectSocket(headless=True, soffice="C:\Program Files\LibreOfficeDev 7\program\soffice.exe"))
+        >>>
+        >>> wb = Calc.open_doc('example.xlsx')
+        >>> ws = Calc.get_sheet()
         >>> Calc.set_sheet_name(ws, 'Spam Spam Spam')
         True
-        >>> Calc.save_doc(wb, 'example_copy.ods')
+        >>> Calc.save_doc(wb, 'example_copy.xlsx')
         >>>
         >>> Lo.close_doc(wb)
         >>> Lo.close_office()
@@ -963,11 +946,11 @@ Enter the following into the interactive shell:
 
     .. code-tab:: python
 
-        >>> from ooodev.utils.lo import Lo
-        >>> loader = Lo.load_office(Lo.ConnectSocket(headless=True))
-        >>>
         >>> from ooodev.office.calc import Calc
-        >>> wb = Calc.create_doc(loader=loader)
+        >>> from ooodev.utils.lo import Lo
+        >>> _ = Lo.load_office(Lo.ConnectSocket(headless=True, soffice="C:\Program Files\LibreOfficeDev 7\program\soffice.exe"))
+        >>>
+        >>> wb = Calc.create_doc()
         Creating Office document scalc
         >>> ws = Calc.get_sheet(doc=wb, index=0)
         >>> Calc.get_sheet_names(wb)
@@ -1031,11 +1014,11 @@ Enter this into the interactive shell:
 
     .. code-tab:: python
 
-        >>> from ooodev.utils.lo import Lo
-        >>> loader = Lo.load_office(Lo.ConnectSocket(headless=True))
-        >>>
         >>> from ooodev.office.calc import Calc
-        >>> wb = Calc.create_doc(loader=loader)
+        >>> from ooodev.utils.lo import Lo
+        >>> _ = Lo.load_office(Lo.ConnectSocket(headless=True, soffice="C:\Program Files\LibreOfficeDev 7\program\soffice.exe"))
+        >>>
+        >>> wb = Calc.create_doc()
         Creating Office document scalc
         >>> ws = Calc.get_sheet(doc=wb, index=0)
         >>> Calc.set_val('Hello, world!', ws, 'A1')
@@ -1179,7 +1162,7 @@ Step 2: Check All Rows and Update Incorrect Prices
 The next part of the program will loop through all the rows in the spreadsheet.
 Add the following code to the bottom of ``updateProduce.py``:
 
-.. todo:: 
+.. todo::
     Tute SS, fix code section below: Loop through the rows and update the prices.
 
 .. tabs::
@@ -1256,13 +1239,13 @@ Enter the following into the interactive shell:
 
     .. code-tab:: python
 
-        >>> from ooodev.utils.lo import Lo
         >>> from ooodev.office.calc import Calc
         >>> from ooodev.utils.gui import GUI
+        >>> from ooodev.utils.lo import Lo
         >>>
-        >>> loader = Lo.load_office(Lo.ConnectSocket())
+        >>> _ = Lo.load_office(Lo.ConnectSocket(soffice="C:\Program Files\LibreOfficeDev 7\program\soffice.exe"))
         >>> doc = Calc.create_doc()
-        >>> GUI.set_visible(is_visible=True, doc=doc)
+        >>> GUI.set_visible(is_visible=True, odoc=doc)
         >>> sheet = Calc.get_sheet(doc=doc)
         >>> for i in range(1, 6): # create some data in column A
         ...     Calc.set_val(i, sheet, 'A'+str(i))
@@ -1275,7 +1258,7 @@ Enter the following into the interactive shell:
         >>> Props.set(cell, CharPosture=FontSlant.ITALIC, CharWeight=FontWeight.BOLD, CharHeight=24,)
         >>> _ = Calc.save_doc(doc, "sampleChart.xlsx")
         >>> # check file
-        >>> Lo.close_doc(doc=doc)
+        >>> Lo.close_doc(doc)
         >>> _ = Lo.close_office()
 
     .. only:: html
@@ -1325,13 +1308,13 @@ The cell value is then set which demonstrates the new style, and the process is 
 
     .. code-tab:: python
 
-        >>> from ooodev.utils.lo import Lo
         >>> from ooodev.office.calc import Calc
         >>> from ooodev.utils.gui import GUI
+        >>> from ooodev.utils.lo import Lo
         >>>
-        >>> loader = Lo.load_office(Lo.ConnectSocket())
+        >>> _ = Lo.load_office(Lo.ConnectSocket(soffice="C:\Program Files\LibreOfficeDev 7\program\soffice.exe"))
         >>> doc = Calc.create_doc()
-        >>> GUI.set_visible(is_visible=True, doc=doc)
+        >>> GUI.set_visible(is_visible=True, odoc=doc)
         >>> sheet = Calc.get_sheet(doc=doc)
 
         >>> from ooodev.utils.props import Props
@@ -1384,7 +1367,7 @@ After you run this code, the styles of the ``A1`` and ``B3`` cells in the spread
 
         :A spreadsheet with custom font styles
 
-.. todo:: 
+.. todo::
 
     Tute ss: Correct how to set a font for a cell.
 
@@ -1434,13 +1417,13 @@ See also :ref:`ch20_storing_2d_arrays`.
 
     .. code-tab:: python
 
-        >>> from ooodev.utils.lo import Lo
         >>> from ooodev.office.calc import Calc
         >>> from ooodev.utils.gui import GUI
+        >>> from ooodev.utils.lo import Lo
         >>>
-        >>> loader = Lo.load_office(Lo.ConnectSocket())
+        >>> _ = Lo.load_office(Lo.ConnectSocket(soffice="C:\Program Files\LibreOfficeDev 7\program\soffice.exe"))
         >>> doc = Calc.create_doc()
-        >>> GUI.set_visible(is_visible=True, doc=doc)
+        >>> GUI.set_visible(is_visible=True, odoc=doc)
         >>> sheet = Calc.get_sheet(doc=doc)
         >>> Calc.set_val(sheet=sheet, cell_name='A1', value=200)
         >>> Calc.set_val(sheet=sheet, cell_name='A2', value=300)
@@ -1499,13 +1482,13 @@ Enter this into the interactive shell:
 
     .. code-tab:: python
 
-        >>> from ooodev.utils.lo import Lo
         >>> from ooodev.office.calc import Calc
         >>> from ooodev.utils.gui import GUI
+        >>> from ooodev.utils.lo import Lo
         >>>
-        >>> loader = Lo.load_office(Lo.ConnectSocket())
+        >>> _ = Lo.load_office(Lo.ConnectSocket(soffice="C:\Program Files\LibreOfficeDev 7\program\soffice.exe"))
         >>> doc = Calc.create_doc()
-        >>> GUI.set_visible(is_visible=True, doc=doc)
+        >>> GUI.set_visible(is_visible=True, odoc=doc)
         >>> sheet = Calc.get_sheet(doc=doc)
         >>> Calc.set_val(sheet=sheet, cell_name='A1', value='Tall row')
         >>> Calc.set_val(sheet=sheet, cell_name='B2', value='Wide column',)
@@ -1566,15 +1549,15 @@ Enter the following into the interactive shell:
 
     .. code-tab:: python
 
-        >>> from ooodev.utils.lo import Lo
         >>> from ooodev.office.calc import Calc
         >>> from ooodev.utils.gui import GUI
+        >>> from ooodev.utils.lo import Lo
         >>>
-        >>> loader = Lo.load_office(Lo.ConnectSocket())
+        >>> _ = Lo.load_office(Lo.ConnectSocket(soffice="C:\Program Files\LibreOfficeDev 7\program\soffice.exe"))
         >>> doc = Calc.create_doc()
-        >>> GUI.set_visible(is_visible=True, doc=doc)
+        >>> GUI.set_visible(is_visible=True, odoc=doc)
         >>> sheet = Calc.get_sheet(doc=doc)
-        >>> 
+        >>>
         >>> # Merge first few cells of the last row
         >>> cell_range = Calc.get_cell_range(sheet, 'A1:D3')
         >>> from com.sun.star.util import XMergeable
@@ -1681,13 +1664,13 @@ Then enter the following into the interactive shell:
 
     .. code-tab:: python
 
-        >>> from ooodev.utils.lo import Lo
         >>> from ooodev.office.calc import Calc
         >>> from ooodev.utils.gui import GUI
+        >>> from ooodev.utils.lo import Lo
         >>>
-        >>> loader = Lo.load_office(Lo.ConnectSocket())
+        >>> _ = Lo.load_office(Lo.ConnectSocket(soffice="C:\Program Files\LibreOfficeDev 7\program\soffice.exe"))
         >>> doc = Calc.open_doc('produceSales.xlsx')
-        >>> GUI.set_visible(is_visible=True, doc=doc)
+        >>> GUI.set_visible(is_visible=True, odoc=doc)
         >>> sheet = Calc.get_sheet(doc=doc)
         >>> Calc.goto_cell(cell_name="A1", doc=doc) # activate reference row
         >>> Calc.freeze_rows(doc=doc, num_rows=1)   # freeze one row before reference
@@ -1756,18 +1739,18 @@ Enter this interactive shell example to create a bar chart and add it to the spr
     .. code-tab:: python
 
         >>> from ooodev.office.calc import Calc
-        >>> from ooodev.office.chart2 import Chart2, Angle
         >>> from ooodev.utils.gui import GUI
         >>> from ooodev.utils.lo import Lo
         >>>
         >>> _ = Lo.load_office(connector=Lo.ConnectPipe(soffice="C:\\Program Files\\LibreOfficeDev 7\\program\\soffice.exe"))
         >>> doc = Calc.create_doc()
-        >>> GUI.set_visible(is_visible=True, doc=doc)
+        >>> GUI.set_visible(is_visible=True, odoc=doc)
         >>> sheet = Calc.get_sheet(doc=doc)
         >>> for i in range(1, 11): # create some data in column A
         ...     Calc.set_val(i, sheet, 'A' + str(i))
         ...
         >>> range_addr = Calc.get_address(sheet=sheet, range_name="A1:A10")
+        >>> from ooodev.office.chart2 import Chart2, Angle
         >>> chart_doc = Chart2.insert_chart(
         ...     sheet=sheet,
         ...     cells_range=range_addr,
