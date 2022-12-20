@@ -1,14 +1,20 @@
+.. _dev_doc:
+
 Dev Docs
 ========
+
+.. _dev_doc_virtulal_env:
 
 Virtual Environment
 -------------------
 
-|odev| uses a virtual environment for development purposes.
+It is assumed `<https://github.com/Amourspirit/python_ooo_dev_tools>`__ has been cloned or unzipped to a folder.
 
 `Poetry <https://python-poetry.org/>`_ is required to install this project in a development environment.
 
-Clone or unzip `<https://github.com/Amourspirit/python_ooo_dev_tools>`__ to a new folder, set up a virtual environment if it is not set up, then activate virtual environment.
+|odev| uses a virtual environment for development purposes.
+
+.. _dev_doc_ve_linux:
 
 Linux
 ^^^^^
@@ -53,6 +59,7 @@ For other options try:
 
         (.venv) $ python -m main cmd-link -h
 
+.. _dev_doc_ve_windos:
 
 Windows
 ^^^^^^^
@@ -73,12 +80,11 @@ Get LibreOffice python version.
 
 .. code-block:: text
 
-    PS C:\python_ooo_dev_tools> "C:\Program Files\LibreOffice\program\python.exe"
-    Python 3.8.10 (default, Mar 23 2022, 15:43:48) [MSC v.1928 64 bit (AMD64)] on win32
-    Type "help", "copyright", "credits" or "license" for more information.
-    >>>
+    PS C:\python_ooo_dev_tools> "C:\Program Files\LibreOffice\program\python.exe" --version
 
-Edit ``env/pyvenv.cfg``  file.
+Will return something like ``Python 3.8.10``
+
+Edit ``pyvenv.cfg``  file.
 
 .. code-block:: text
 
@@ -113,6 +119,8 @@ Install requirements using Poetry.
 
     (.venv) PS C:\python_ooo_dev_tools> poetry install
 
+.. _dev_doc_ve_test:
+
 Testing Virtual Environment
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -127,6 +135,8 @@ For a quick test of environment import ``uno`` If there is no import  error you 
     >>> import uno
     >>>
 
+
+.. _dev_doc_hooks:
 
 Hooks
 -----
@@ -152,8 +162,12 @@ Example git ``--no-verify`` command:
 
         git commit -n -m "rename somefile.txt to myfile.txt"
 
+.. _dev_doc_docs:
+
 Docs
 ----
+
+.. _dev_doc_docs_bulding:
 
 Building Docs
 ^^^^^^^^^^^^^
@@ -168,7 +182,9 @@ With virtual environment activated, open a terminal window and ``cd ./docs``
 .. code-block:: text
     :caption: Windows
 
-    (.venv) PS > .\make.bat html
+    PS C:\python_ooo_dev_tools\docs> make html
+
+.. _dev_doc_docs_view:
 
 Viewing docs
 ^^^^^^^^^^^^
@@ -176,7 +192,7 @@ Viewing docs
 |online_docs|_ are available.
 Viewing local docs can be done by starting a local webserver.
 
-|odev| has a script tho make this easier. In a separate terminal window run:
+|odev| has a script to make this easier. In a separate terminal window run:
 
 .. code-block:: text
     :caption: Linux
@@ -186,9 +202,11 @@ Viewing local docs can be done by starting a local webserver.
 .. code-block:: text
     :caption: Windows
 
-    (.venv) PS > python .\cmds\run_http.py
+    PS C:\python_ooo_dev_tools> python .\cmds\run_http.py
 
 This starts a web server on localhost. Docs can the be viewed at http://localhost:8000/docs/_build/html/index.html
+
+.. _dev_doc_docs_style:
 
 Doc Style
 ^^^^^^^^^
@@ -196,8 +214,12 @@ Doc Style
 Doc for project are in the ``./docs`` folder.
 Docs follow a basic style guide. If you are making any changes to docs please consult the ``./docs/sytle_guide.txt`` for guidelines.
 
+.. _dev_doc_docs_spell:
+
 Doc Spelling
 ^^^^^^^^^^^^
+
+.. _dev_doc_docs_spell_check:
 
 Manual spell check
 """"""""""""""""""
@@ -210,6 +232,7 @@ Manual spell check can be run in a ``./docs`` terminal Windows.
 
     (.venv) $ sphinx-build -b spelling . _build
 
+.. _dev_doc_docs_spell_dict:
 
 Spelling custom dictionaries
 """"""""""""""""""""""""""""

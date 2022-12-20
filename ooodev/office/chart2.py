@@ -5,13 +5,13 @@ from typing import List, Tuple, cast, overload, TYPE_CHECKING
 
 import uno
 
-# XChartTypeTemplate import error in LO >+ 7.4
-from com.sun.star.chart2 import XChartTypeTemplate
+# XChartTypeTemplate import error in LO 7.4.0 to 7.4.3
 from com.sun.star.beans import XPropertySet
 from com.sun.star.chart2 import XAxis
 from com.sun.star.chart2 import XChartDocument
 from com.sun.star.chart2 import XChartType
 from com.sun.star.chart2 import XChartTypeContainer
+from com.sun.star.chart2 import XChartTypeTemplate
 from com.sun.star.chart2 import XCoordinateSystem
 from com.sun.star.chart2 import XCoordinateSystemContainer
 from com.sun.star.chart2 import XDataSeries
@@ -43,6 +43,7 @@ from com.sun.star.sheet import XSpreadsheetDocument
 from com.sun.star.table import XTableChart
 from com.sun.star.table import XTableChartsSupplier
 from com.sun.star.util import XNumberFormatsSupplier
+
 
 from . import calc as mCalc
 from ..exceptions import ex as mEx
@@ -84,31 +85,38 @@ class Chart2:
 
     _CHART_NAME = "chart$$_"
 
-    # region insert a chart
+    # region insert/remove a chart
     @classmethod
     def insert_chart(
         cls,
-        sheet: XSpreadsheet,
-        cells_range: CellRangeAddress,
-        cell_name: str,
-        width: int,
-        height: int,
-        diagram_name: ChartTemplateBase | str,
+        sheet: XSpreadsheet | None = None,
+        cells_range: CellRangeAddress | None = None,
+        cell_name: str = "",
+        width: int = 16,
+        height: int = 9,
+        diagram_name: ChartTemplateBase | str = "Column",
         color_bg: mColor.Color = mColor.CommonColor.PALE_BLUE,
         color_wall: mColor.Color = mColor.CommonColor.LIGHT_BLUE,
+        **kwargs,
     ) -> XChartDocument:
         """
         Insert a new chart
 
         Args:
-            sheet (XSpreadsheet): Spreadsheet
-            cells_range (CellRangeAddress): Cell range address
-            cell_name (str): Cell name such as ``A1``
-            width (int): Width
-            height (int): Height
-            diagram_name (ChartTemplateBase | str): Diagram Name
+            sheet (XSpreadsheet, optional): Spreadsheet
+            cells_range (CellRangeAddress, optional): Cell range address. Defaults to current selected cells.
+            cell_name (str, optional): Cell name such as ``A1``.
+            width (int, optional): Width. Default ``16``.
+            height (int, optional): Height. Default ``9``.
+            diagram_name (ChartTemplateBase | str): Diagram Name. Defaults to ``Column``.
             color_bg (Color, optional): Color Background. Defaults to ``CommonColor.PALE_BLUE``.
             color_wall (Color, optional): Color Wall. Defaults to ``CommonColor.LIGHT_BLUE``.
+
+        Keyword Arguments:
+            chart_name (str, optional): Chart name
+            is_row (bool, optional): Determines if the data is row data or column data.
+            first_cell_as_label (bool, optional): Set is first row is to be used as a label.
+            set_data_point_labels (bool, optional): Determines if the data point labels are set.
 
         Raises:
             ChartError: If error occurs
@@ -116,18 +124,45 @@ class Chart2:
         Returns:
             XChartDocument: Chart Document that was created and inserted
 
+        Note:
+            **Keyword Arguments** are to mostly be ignored.
+            If finer control over chart creation is needed then **Keyword Arguments** can be used.
+
         See Also:
             :py:class:`~.color.CommonColor`
 
         Hint:
             .. include:: ../../resources/utils/chart2_lookup_chart_tmpl.rst
+
+        .. versionchanged:: 0.8.1
+            All parameters made optional. Added ``chart_name`` parameter.
         """
         try:
             # type check that diagram_name is ChartTemplateBase | str
             mInfo.Info.is_type_enum_multi(
                 alt_type="str", enum_type=ChartTemplateBase, enum_val=diagram_name, arg_name="diagram_name"
             )
-            chart_name = Chart2._CHART_NAME + str(int(random() * 10_000))
+            doc = None
+            if sheet is None:
+                doc = mCalc.Calc.get_ss_doc(mLo.Lo.this_component)
+                sheet = mCalc.Calc.get_active_sheet(doc)
+                if sheet is None:
+                    raise mEx.NoneError("unable to obtain sheet, Calc.get_active_sheet() is None")
+
+            if cells_range is None:
+                if doc is None:
+                    doc = mCalc.Calc.get_ss_doc(mLo.Lo.this_component)
+                cells_range = mCalc.Calc.get_selected_addr(doc)
+                if cells_range is None:
+                    raise mEx.NoneError("unable to obtain cells_rnage, Calc.get_selected_addr() is None")
+
+            if not cell_name:
+                cell_name = mCalc.Calc.get_cell_str(col=cells_range.EndColumn + 1, row=cells_range.StartRow)
+
+            chart_name = kwargs.get("chart_name", None)
+            if not chart_name:
+                chart_name = Chart2._CHART_NAME + str(int(random() * 10_000))
+
             cls.add_table_chart(
                 sheet=sheet,
                 chart_name=chart_name,
@@ -137,19 +172,52 @@ class Chart2:
                 height=height,
             )
             chart_doc = cls.get_chart_doc(sheet, chart_name)
+            if "is_row" in kwargs:
+                is_row = bool(kwargs["is_row"])
+            else:
+                is_row = mCalc.Calc.is_single_row_range(cells_range)
+
+            is_single = mCalc.Calc.is_single_column_range(cells_range) or mCalc.Calc.is_single_row_range(cells_range)
+
+            if is_row:
+                data_row_source = ChartDataRowSource.ROWS
+            else:
+                data_row_source = ChartDataRowSource.COLUMNS
 
             # assign chart template to the chart's diagram
             diagram = chart_doc.getFirstDiagram()
             ct_template = cls.set_template(chart_doc=chart_doc, diagram=diagram, diagram_name=diagram_name)
 
-            has_cats = cls.has_categories(diagram_name)
+            arg_first_cell = False
+            arg_has_cats = False
+
+            if "set_data_point_labels" in kwargs:
+                has_cats = bool(kwargs["set_data_point_labels"])
+                arg_has_cats = True
+            else:
+                has_cats = cls.has_categories(diagram_name)
 
             dp = chart_doc.getDataProvider()
 
+            if "first_cell_as_label" in kwargs:
+                first_cell_as_lbl = bool(kwargs["first_cell_as_label"])
+                arg_first_cell = True
+            else:
+                first_cell_as_lbl = True
+
+            if is_single:
+                if not arg_has_cats:
+                    has_cats = False
+                # get the cell first value
+                if not arg_first_cell:
+                    first_val = mCalc.Calc.get_val(sheet=sheet, col=cells_range.StartColumn, row=cells_range.StartRow)
+                    if isinstance(first_val, float):
+                        first_cell_as_lbl = False
+
             ps = mProps.Props.make_props(
                 CellRangeRepresentation=mCalc.Calc.get_range_str(cells_range, sheet),
-                DataRowSource=ChartDataRowSource.COLUMNS,
-                FirstCellAsLabel=True,
+                DataRowSource=data_row_source,
+                FirstCellAsLabel=first_cell_as_lbl,
                 HasCategories=has_cats,
             )
             ds = dp.createDataSource(ps)
@@ -234,6 +302,7 @@ class Chart2:
             .. include:: ../../resources/utils/chart2_lookup_chart_tmpl.rst
         """
         # XChartTypeTemplate does not seem to be supported by LO 7.4 ( gets import error )
+        # this should be fixe in LO 7.4.4 +
         # Available interfaces com.sun.star.chart2.template.Column: (also XInterface)
         # com.sun.star.beans.XFastPropertySet
         # com.sun.star.beans.XMultiPropertySet
@@ -255,7 +324,10 @@ class Chart2:
         try:
             ct_man = chart_doc.getChartTypeManager()
             msf = mLo.Lo.qi(XMultiServiceFactory, ct_man, True)
-            template_nm = f"com.sun.star.chart2.template.{diagram_name}"
+            if isinstance(diagram_name, ChartTemplateBase):
+                template_nm = diagram_name.to_namespace()
+            else:
+                template_nm = f"com.sun.star.chart2.template.{diagram_name}"
             ct_template = mLo.Lo.qi(XChartTypeTemplate, msf.createInstance(template_nm))
             if ct_template is None:
                 mLo.Lo.print(f'Could not create chart template "{diagram_name}"; using a column chart instead')
@@ -297,7 +369,28 @@ class Chart2:
                 return False
         return True
 
-    # endregion insert a chart
+    @staticmethod
+    def remove_chart(sheet: XSpreadsheet, chart_name: str) -> bool:
+        """
+        Removes a chart from Spreadsheet
+
+        Args:
+            sheet (XSpreadsheet): Spreadsheet
+            chart_name (str): Chart Name
+
+        Returns:
+            bool: ``True`` if chart was removed; Otherwise, ``False``
+
+        .. versionadded:: 0.8.1
+        """
+        charts_supp = mLo.Lo.qi(XTableChartsSupplier, sheet, True)
+        tbl_charts = charts_supp.getCharts()
+        if tbl_charts.hasByName(chart_name):
+            tbl_charts.removeByName(chart_name)
+            return True
+        return False
+
+    # endregion insert/remove a chart
 
     # region get a chart
     @classmethod
@@ -876,7 +969,7 @@ class Chart2:
         """
         try:
             xtitle = cls.get_axis_title(chart_doc=chart_doc, axis_val=axis_val, idx=idx)
-            mProps.Props.set_property(xtitle, "TextRotation", angle.Value)
+            mProps.Props.set(xtitle, TextRotation=angle.value)
         except mEx.ChartError:
             raise
         except Exception as e:
@@ -1278,12 +1371,10 @@ class Chart2:
             legend = diagram.getLegend()
             if is_visible and legend is None:
                 leg = mLo.Lo.create_instance_mcf(XLegend, "com.sun.star.chart2.Legend", raise_err=True)
-                mProps.Props.set_property(leg, "LineStyle", LineStyle.NONE)
-                mProps.Props.set_property(leg, "FillStyle", FillStyle.SOLID)
-                mProps.Props.set_property(leg, "FillTransparence", 100)
+                mProps.Props.set(leg, LineStyle=LineStyle.NONE, FillStyle=FillStyle.SOLID, FillTransparence=100)
                 diagram.setLegend(leg)
 
-            mProps.Props.set_property(leg, "Show", is_visible)
+            mProps.Props.set(leg, Show=is_visible)
         except Exception as e:
             raise mEx.ChartError("Error while setting legend visibility") from e
 
@@ -1575,7 +1666,10 @@ class Chart2:
             alt_type="str", enum_type=ChartTypeNameBase, enum_val=chart_type, arg_name="chart_type"
         )
         try:
-            srch_name = f"com.sun.star.chart2.{str(chart_type).lower()}"
+            if isinstance(chart_type, ChartTypeNameBase):
+                srch_name = chart_type.to_namespace().lower()
+            else:
+                srch_name = f"com.sun.star.chart2.{str(chart_type).lower()}"
             chart_types = cls.get_chart_types(chart_doc)
             for ct in chart_types:
                 ct_name = ct.getChartType().lower()
@@ -1595,7 +1689,7 @@ class Chart2:
         """
         chart_types = cls.get_chart_types(chart_doc)
         if len(chart_types) > 1:
-            print(f"No. of chart tyeps: {len(chart_types)}")
+            print(f"No. of chart types: {len(chart_types)}")
             for ct in chart_types:
                 print(f"  {ct.getChartType()}")
         else:
@@ -1908,14 +2002,10 @@ class Chart2:
                 # XProperySet methods such as  setPropertyValue and getPropertySetInfo are missing.
                 # see also: Props._set_by_attribute()
                 white_day_ps = mLo.Lo.qi(XPropertySet, mProps.Props.get(ct, "WhiteDay"), True)
-                white_day_dpp = cast("DataPointProperties", white_day_ps)
-                white_day_dpp.FillColor = int(w_day_color)
-                # mProps.Props.set_property(white_day_ps, "FillColor", int(w_day_color))
+                mProps.Props.set(white_day_ps, FillColor=int(w_day_color))
 
                 black_day_ps = mLo.Lo.qi(XPropertySet, mProps.Props.get(ct, "BlackDay"), True)
-                black_day_dpp = cast("DataPointProperties", black_day_ps)
-                black_day_dpp.FillColor = int(b_day_color)
-                # mProps.Props.set_property(black_day_ps, "FillColor", int(b_day_color))
+                mProps.Props.set(black_day_ps, FillColor=int(b_day_color))
             else:
                 raise mEx.NotSupportedError(
                     f'Only candel stick charts supported. "{ct.getChartType()}" not supported.'
@@ -2233,7 +2323,7 @@ class Chart2:
             # create (empty) data series in the line chart
             ds = mLo.Lo.create_instance_mcf(XDataSeries, "com.sun.star.chart2.DataSeries", raise_err=True)
 
-            mProps.Props.set_property(ds, "Color", int(mColor.CommonColor.RED))
+            mProps.Props.set(ds, Color=int(mColor.CommonColor.RED))
             data_series_cnt.addDataSeries(ds)
 
             # add data to series by treating it as a data sink
@@ -2310,7 +2400,7 @@ class Chart2:
             for i in range(num_shapes):
                 try:
                     shape = mLo.Lo.qi(XShape, draw_page.getByIndex(i), True)
-                    classid = str(mProps.Props.get_property(shape, "CLSID")).lower()
+                    classid = str(mProps.Props.get(shape, "CLSID")).lower()
                     if classid == chart_classid:
                         break
                 except Exception:
@@ -2390,7 +2480,7 @@ class Chart2:
         try:
             chart_shape = cls.get_chart_shape(sheet)
 
-            graphic = mLo.Lo.qi(XGraphic, mProps.Props.get_property(chart_shape, "Graphic"), True)
+            graphic = mLo.Lo.qi(XGraphic, mProps.Props.get(chart_shape, "Graphic"), True)
 
             tmp_fnm = mFileIo.FileIO.create_temp_file("png")
             mImgLo.ImagesLo.save_graphic(pic=graphic, fnm=tmp_fnm, im_format="png")

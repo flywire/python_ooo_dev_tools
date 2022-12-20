@@ -17,15 +17,15 @@ if TYPE_CHECKING:
 
 
 @enforce.enforce_types
-@dataclass(frozen=True)
+@dataclass(unsafe_hash=True)
 class PolySides(BaseIntValue):
     """Represents Polygon Sides value from ``3`` to ``30``."""
 
     def __post_init__(self) -> None:
         check(
-            self.Value >= 3 and self.Value <= 30,
+            self.value >= 3 and self.value <= 30,
             f"{self}",
-            f"Value of {self.Value} is out of range. Value must be from 3 to 30.",
+            f"Value of {self.value} is out of range. Value must be from 3 to 30.",
         )
 
     def _from_int(self, int) -> Self:

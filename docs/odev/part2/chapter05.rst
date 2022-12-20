@@ -30,6 +30,8 @@ Although the code is long, it's well-organized. Some smaller text processing exa
 
 This chapter (and later ones) assume that you're familiar with Writer, including text concepts such as paragraph styles. If you're not, then I recommend the |write_guide|_, user manual.
 
+.. _ch05_overview_api:
+
 5.1 An Overview of the Text Document API
 ========================================
 
@@ -126,6 +128,8 @@ which allows it to move in terms of lines, pages, or screens.
 A cursor's location is specified using a text range, which can be the currently selected text, or a position in the document.
 A text position is a text range that begins and ends at the same point.
 
+.. _ch05_extract_text:
+
 5.2 Extracting Text from a Document
 ===================================
 
@@ -139,15 +143,12 @@ The |extract_ex|_ example opens a document using :py:meth:`.Lo.open_doc`, and tr
         # coding: utf-8
         from __future__ import annotations
         import argparse
-        from typing import Any, cast
+        from typing import cast
 
-        from ooodev.utils.lo import Lo
         from ooodev.office.write import Write
         from ooodev.utils.info import Info
+        from ooodev.utils.lo import Lo
         from ooodev.wrapper.break_context import BreakContext
-        from ooodev.events.gbl_named_event import GblNamedEvent
-        from ooodev.events.args.cancel_event_args import CancelEventArgs
-        from ooodev.events.lo_events import LoEvents
 
 
         def args_add(parser: argparse.ArgumentParser) -> None:
@@ -160,18 +161,13 @@ The |extract_ex|_ example opens a document using :py:meth:`.Lo.open_doc`, and tr
                 required=True,
             )
 
-        def on_lo_print(source: Any, e: CancelEventArgs) -> None:
-            e.cancel = True
-
         def main() -> int:
             parser = argparse.ArgumentParser(description="main")
             args_add(parser=parser)
             args = parser.parse_args()
+            
+            with BreakContext(Lo.Loader(connector=Lo.ConnectSocket(headless=True))) as loader:
 
-            # hook ooodev internal printing event
-            LoEvents().on(GblNamedEvent.PRINTING, on_lo_print)
-
-            with BreakContext(Lo.Loader(Lo.ConnectSocket(headless=True))) as loader:
                 fnm = cast(str, args.file_path)
 
                 try:
@@ -188,7 +184,7 @@ The |extract_ex|_ example opens a document using :py:meth:`.Lo.open_doc`, and tr
                     print(text)
                     print("-" * 50)
                 else:
-                    print("Extraction unsupported for this doc type")
+                    print("Extraction unsupported for this doc type")   
                 Lo.close_doc(doc)
 
             return 0
@@ -202,44 +198,6 @@ The |extract_ex|_ example opens a document using :py:meth:`.Lo.open_doc`, and tr
         .. cssclass:: tab-none
 
             .. group-tab:: None
-
-|extract_ex|_ example also hooks |odev|'s internal events and cancels the printing event.
-Thus suppressing any internal printing to console.
-
-.. tabs::
-
-    .. code-tab:: python
-
-        def on_lo_print(source: Any, e: CancelEventArgs) -> None:
-            e.cancel = True
-
-        def main() -> int:
-
-            # hook internal printing event
-            LoEvents().on(GblNamedEvent.PRINTING, on_lo_print)
-
-    .. only:: html
-
-        .. cssclass:: tab-none
-
-            .. group-tab:: None
-
-If internal printing were not suppressed the output would contains extra
-output similar to what is shown here:
-
-.. code-block:: text
-
-    Loading Office...
-    Opening /home/user/Python/ooouno_ex/resources/odt/cicero_dummy.odt
-    -------------------Text Content-------------------
-    Cicero
-    Dummy Text
-    But I must explain to you how all this mistaken idea of denouncing pleasure and praising ...
-    --------------------------------------------------
-    Closing the document
-    Closing Office
-    Office terminated
-    Office bridge has gone!!
 
 :py:meth:`.Info.is_doc_type` tests the document's type by casting it into an XServiceInfo_ interface. Then it calls ``XServiceInfo.supportsService()``
 to check the document's service capabilities:
@@ -419,12 +377,16 @@ For example, it's possible to find a bookmark in a document, extract its text ra
 
 Code for this in :ref:`ch07`.
 
+.. _ch05_get_all_txt:
+
 A Problem with Write.get_all_text()
 -----------------------------------
 
 :py:meth:`~.Write.get_all_text` may fail if supplied with a very large document because ``XTextCursor.getString()`` might be unable to construct a big enough String object.
 For that reason, it's better to iterate over large documents returning a paragraph of text at a time.
 These iteration techniques are described next.
+
+.. _ch05_cursor_iteration:
 
 5.3 Cursor Iteration
 ====================
@@ -606,6 +568,8 @@ This only means that XTextViewCursor supports the same character-based movement 
 
         :The ``XTextViewCursor`` Inheritance Hierarchy.
 
+.. _ch05_cursors_create:
+
 5.4 Creating Cursors
 ====================
 
@@ -665,6 +629,8 @@ As described in :ref:`ch01_fcm_relationship`, the controller is reached via the 
 The view cursor isn't directly accessible from the controller; a supplier must be queried,
 even though there's only one view cursor per document.
 
+.. _ch05_count_words:
+
 5.4.1 Counting Words
 --------------------
 
@@ -697,6 +663,8 @@ even though there's only one view cursor per document.
 This uses the same kind of while loop as ``show_paragraphs()`` except that the XWordCursor_ methods
 ``gotoEndOfWord()`` and ``gotoNextWord()`` control the iteration.
 Also, there's no need for an XTextViewCursor_ instance since the selected words aren't shown on the screen.
+
+.. _ch05_display_lines:
 
 5.4.2 Displaying Lines
 ----------------------
@@ -758,6 +726,8 @@ Then the XTextViewCursor_ instance deselects the line, by moving the cursor to t
 At the end of the loop, ``goRight()`` tries to move the cursor one character to the right.
 If ``goRight()`` succeeds then the cursor is shifted one position to the first character of the next line. When the loop repeats, this line will be selected.
 If ``goRight()`` fails, then there are no more characters to be read from the document, and the loop finishes.
+
+.. _ch05_create_doc:
 
 5.5 Creating a Document
 =======================
@@ -1038,6 +1008,7 @@ If the sentence ends after the end of the paragraph then ``compare_cursor_ends()
 
 Since there's no string being created by the comparer, there's no way that the instantiating can fail due to the size of the text.
 
+.. _ch05_insert_change_txt:
 
 5.7 Inserting/Changing Text in a Document
 =========================================
@@ -1132,6 +1103,8 @@ If ``bAbsorb`` is true then the string replaces the current selection (which is 
 
 ``mid_shuffle()`` shuffles the string in ``curr_word``, returning a new word. It doesn't use the Office API, so no explanation here.
 
+
+.. _ch05_doc_as_paragraphs:
 
 5.8 Treating a Document as Paragraphs and Text Portions
 =======================================================
@@ -1268,6 +1241,8 @@ For instance, the following prints the text portion type and the string inside t
 These code fragments are combined together in the |show_book|_ example.
 
 More details on enumerators and text portions are given in the Developers Guide at https://wiki.openoffice.org/wiki/Documentation/DevGuide/Text/Iterating_over_Text
+
+.. _ch05_append:
 
 5.9 Appending Documents Together
 ================================

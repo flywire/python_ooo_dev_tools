@@ -9,6 +9,62 @@ if __name__ == "__main__":
 # region    Sheet Methods
 
 
+def test_create_doc_events_no_loader(loader):
+    from ooodev.utils.lo import Lo
+    from ooodev.office.calc import Calc
+    from ooodev.events.args.cancel_event_args import CancelEventArgs
+    from ooodev.events.args.event_args import EventArgs
+    from ooodev.events.lo_events import Events, event_ctx, is_meth_event
+    from ooodev.events.calc_named_event import CalcNamedEvent
+    from ooodev.exceptions import ex as mEx
+
+    doc_opened = False
+    doc_opening = False
+
+    def on(source: Any, args: CancelEventArgs) -> None:
+        nonlocal doc_opening
+        doc_opening = True
+        assert args.event_data["loader"] is None
+        assert is_meth_event(source, Calc.create_doc)
+        assert args.source is source
+        assert args.event_name == CalcNamedEvent.DOC_CREATING
+
+    def on_cancel(source: Any, args: CancelEventArgs) -> None:
+        args.cancel = True
+
+    def after(source: Any, args: EventArgs) -> None:
+        nonlocal doc_opened
+        doc_opened = True
+        assert args.event_data["loader"] is None
+        assert is_meth_event(source, Calc.create_doc)
+        assert args.source is source
+        assert args.event_name == CalcNamedEvent.DOC_CREATED
+
+    events = Events()
+    events.on(CalcNamedEvent.DOC_CREATING, on)
+    events.on(CalcNamedEvent.DOC_CREATED, after)
+
+    doc = Calc.create_doc()
+    assert doc is not None
+    try:
+        assert doc_opened
+        assert doc_opening
+    finally:
+        Lo.close_doc(doc=doc, deliver_ownership=False)
+
+    events = None
+    events = Events()
+    events.on(CalcNamedEvent.DOC_CREATING, on_cancel)
+    with pytest.raises(mEx.CancelEventError):
+        doc = Calc.create_doc()
+    events = None
+
+    with event_ctx() as events:
+        events.on(CalcNamedEvent.DOC_CREATING, on_cancel)
+        with pytest.raises(mEx.CancelEventError):
+            doc = Calc.create_doc()
+
+
 def test_create_doc_events(loader):
     from ooodev.utils.lo import Lo
     from ooodev.office.calc import Calc
@@ -45,6 +101,7 @@ def test_create_doc_events(loader):
     events.on(CalcNamedEvent.DOC_CREATED, after)
 
     doc = Calc.create_doc(loader)
+    assert doc is not None
     try:
         assert doc_opened
         assert doc_opening
@@ -127,6 +184,7 @@ def test_get_sheet(loader) -> None:
             events.on(CalcNamedEvent.SHEET_GETTING, on)
             events.on(CalcNamedEvent.SHEET_GET, after)
             sheet_1_3 = Calc.get_sheet(doc=doc, index=0)
+            sheet_1_3 = Calc.get_sheet(doc)
 
         assert on_firing
         assert on_fired
@@ -149,7 +207,7 @@ def test_get_sheet(loader) -> None:
             Calc.get_sheet(doc=doc, name="Sheet1")
         with pytest.raises(TypeError):
             # Incorrect number of params
-            Calc.get_sheet(doc=doc)
+            Calc.get_sheet()
     finally:
         Lo.close_doc(doc=doc, deliver_ownership=False)
 
@@ -995,7 +1053,44 @@ def test_insert_cells_down(loader) -> None:
         val = Calc.get_val(sheet=sheet, cell_name="B9")
         assert val == "hello world"
     finally:
-        Lo.close(closeable=doc, deliver_ownership=False)
+        Lo.close(doc)
+
+
+def test_insert_cells_down_rng(loader) -> None:
+    from ooodev.utils.lo import Lo
+    from ooodev.office.calc import Calc
+
+    doc = Calc.create_doc(loader)
+    try:
+
+        sheet = Calc.get_active_sheet(doc)
+
+        rng = Calc.get_range_obj("B1:D4")
+        Calc.set_val(value="hello world", sheet=sheet, cell_name="B5")
+        assert Calc.insert_cells(sheet=sheet, range_obj=rng, is_shift_right=False)
+
+        val = Calc.get_val(sheet=sheet, cell_name="B9")
+        assert val == "hello world"
+    finally:
+        Lo.close(doc)
+
+
+def test_insert_cells_down_positional(loader) -> None:
+    from ooodev.utils.lo import Lo
+    from ooodev.office.calc import Calc
+
+    doc = Calc.create_doc(loader)
+    try:
+
+        sheet = Calc.get_active_sheet(doc)
+
+        Calc.set_val(value="hello world", sheet=sheet, cell_name="B5")
+        assert Calc.insert_cells(sheet, "B1:D4", False)
+
+        val = Calc.get_val(sheet=sheet, cell_name="B9")
+        assert val == "hello world"
+    finally:
+        Lo.close(doc)
 
 
 def test_insert_cells_right(loader) -> None:
@@ -1099,6 +1194,49 @@ def test_delete_cells_down(loader) -> None:
         # note without calling 'sheet = Calc.get_active_sheet(doc)' this test fails.
         # for unknown reason Calc.get_val() will always return None after delete_cell()
         # refreshing sheet solves the issue.
+        sheet = Calc.get_active_sheet(doc)
+        val = Calc.get_val(sheet=sheet, cell_name="B5")
+        assert val == "hello world"
+    finally:
+        Lo.close(closeable=doc, deliver_ownership=False)
+
+
+def test_delete_cells_down_rng(loader) -> None:
+    from ooodev.utils.lo import Lo
+    from ooodev.office.calc import Calc
+
+    # from ooodev.utils.gui import GUI
+    doc = Calc.create_doc(loader)
+    try:
+        sheet = Calc.get_active_sheet(doc)
+
+        # GUI.set_visible(is_visible=True, odoc=doc)
+        rng = Calc.get_range_obj("B1:D4")
+        Calc.set_val(value="hello world", sheet=sheet, cell_name="B9")
+        # Calc.set_val(value="A1",sheet=sheet, cell_name="A1")
+        assert Calc.delete_cells(sheet=sheet, range_obj=rng, is_shift_left=False)
+
+        sheet = Calc.get_active_sheet(doc)
+        val = Calc.get_val(sheet=sheet, cell_name="B5")
+        assert val == "hello world"
+    finally:
+        Lo.close(closeable=doc, deliver_ownership=False)
+
+
+def test_delete_cells_down_rng_postional(loader) -> None:
+    from ooodev.utils.lo import Lo
+    from ooodev.office.calc import Calc
+
+    # from ooodev.utils.gui import GUI
+    doc = Calc.create_doc(loader)
+    try:
+        sheet = Calc.get_active_sheet(doc)
+
+        # GUI.set_visible(is_visible=True, odoc=doc)
+        Calc.set_val(value="hello world", sheet=sheet, cell_name="B9")
+        # Calc.set_val(value="A1",sheet=sheet, cell_name="A1")
+        assert Calc.delete_cells(sheet, "B1:D4", False)
+
         sheet = Calc.get_active_sheet(doc)
         val = Calc.get_val(sheet=sheet, cell_name="B5")
         assert val == "hello world"
@@ -1850,9 +1988,6 @@ def test_get_array(loader) -> None:
 
 def test_print_array(capsys: pytest.CaptureFixture) -> None:
     from ooodev.office.calc import Calc
-    from ooodev.events.args.cancel_event_args import CancelEventArgs
-    from ooodev.events.lo_events import Events, is_meth_event
-    from ooodev.events.gbl_named_event import GblNamedEvent
 
     capsys.readouterr()  # clear buffer
     Calc.print_array([])
@@ -1871,21 +2006,6 @@ def test_print_array(capsys: pytest.CaptureFixture) -> None:
 
 """
     )
-
-    on_firing = False
-
-    def on(source: Any, args: CancelEventArgs) -> None:
-        nonlocal on_firing
-        if is_meth_event(source, Calc.print_array):
-            args.cancel = True
-            on_firing = True
-
-    events = Events()
-    events.on(GblNamedEvent.PRINTING, on)
-    Calc.print_array([])
-    assert on_firing is True
-    captured = capsys.readouterr()
-    assert captured.out == ""
 
 
 def test_get_float_array(loader) -> None:
@@ -1935,6 +2055,16 @@ def test_get_set_col(loader) -> None:
         # set_col(sheet: XSpreadsheet, values: Sequence[Any], cell_name: str)
         # keyword arguments
         Calc.set_col(sheet=sheet, values=vals, cell_name="A1")
+
+        col_first = Calc.get_col_used_first_index(sheet)
+        assert col_first == 0
+        col_last = Calc.get_col_used_last_index(sheet)
+        assert col_last == 0
+        row_first = Calc.get_row_used_first_index(sheet)
+        assert row_first == 0
+        row_last = Calc.get_row_used_last_index(sheet)
+        assert row_last == vals_len - 1
+
         range_name = f"{Calc.get_cell_str(col=0, row=0)}:{Calc.get_cell_str(col=0, row= vals_len -1)}"
         new_vals = Calc.get_col(sheet=sheet, range_name=range_name)
         for i, val in enumerate(vals):
@@ -2108,6 +2238,10 @@ def test_get_cell(loader) -> None:
         cell_name = Calc.get_cell_str(addr=addr)
 
         cell_range = Calc.get_cell_range(sheet=sheet, col_start=col, row_start=row, col_end=col, row_end=row)
+        rng_obj = Calc.get_range_obj(cell_range=cell_range)
+        assert rng_obj.col_start == "C"
+        assert rng_obj.row_start == row + 1
+
         Calc.set_val(value=test_val, sheet=sheet, cell_name=cell_name)
         # get_cell(sheet: XSpreadsheet, addr: CellAddress)
         cell = Calc.get_cell(sheet=sheet, addr=addr)
@@ -2343,7 +2477,9 @@ def test_get_row_range(loader) -> None:
 def test_get_cell_range_positions() -> None:
     from ooodev.office.calc import Calc
 
-    points = Calc.get_cell_range_positions(range_name="A1:C5")
+    range_name = "A1:C5"
+    rng_obj = Calc.get_range_obj(range_name=range_name)
+    points = Calc.get_cell_range_positions(range_name=str(rng_obj))
     assert len(points) == 2
     assert points[0].X == 0  # A
     assert points[0].Y == 0  # 1
@@ -2361,6 +2497,18 @@ def test_get_cell_position() -> None:
     p = Calc.get_cell_position("C5")
     assert p.X == 2
     assert p.Y == 4
+
+
+@pytest.mark.parametrize(("rng", "width", "height"), [("A1:C5", 3, 5), ("E10:K21", 7, 12), ("AA58:CT81", 72, 24)])
+def test_get_cell_size(rng: str, width: int, height: int) -> None:
+    from ooodev.office.calc import Calc
+
+    range_name = rng
+    rng_obj = Calc.get_range_obj(range_name=range_name)
+    size = Calc.get_range_size(rng_obj)
+
+    assert size.Width == width
+    assert size.Height == height
 
 
 def test_get_cell_pos(loader) -> None:
@@ -2432,6 +2580,7 @@ def test_row_string_to_number() -> None:
 def test_get_cell_address(loader) -> None:
     from ooodev.utils.lo import Lo
     from ooodev.office.calc import Calc
+    from ooodev.utils.data_type.cell_obj import CellObj
 
     assert loader is not None
     doc = Calc.create_doc(loader)
@@ -2450,8 +2599,15 @@ def test_get_cell_address(loader) -> None:
         assert addr.Column == 2
         assert addr.Row == 1
 
+        co = CellObj("C", 2)
+        cell = Calc.get_cell(sheet=sheet, cell_obj=co)
+
+        addr = Calc.get_cell_address(cell=cell)
+        assert addr.Column == 2
+        assert addr.Row == 1
+
         # get_cell_address(sheet: XSpreadsheet, cell_name: str)
-        addr = Calc.get_cell_address(sheet=sheet, cell_name=cell_name)
+        addr = Calc.get_cell_address(sheet=sheet, cell_obj=co)
         assert addr.Column == 2
         assert addr.Row == 1
         addr = Calc.get_cell_address(sheet, cell_name)

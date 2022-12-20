@@ -13,15 +13,15 @@ if TYPE_CHECKING:
 
 
 @enforce.enforce_types
-@dataclass(frozen=True)
+@dataclass(unsafe_hash=True)
 class ImageOffset(BaseFloatValue):
     """Represents a Image Offset value between ``0.0`` and ``1.0``"""
 
     def __post_init__(self) -> None:
         check(
-            (self.Value < 0.0 or self.Value >= 1.0) == False,
+            (self.value < 0.0 or self.value >= 1.0) == False,
             f"{self}",
-            f"Value of {self.Value} is out of range. Value must be between 0.0 and 1.0",
+            f"Value of {self.value} is out of range. Value must be between 0.0 and 1.0",
         )
 
     def _from_float(self, value: int) -> Self:

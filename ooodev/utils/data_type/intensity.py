@@ -15,15 +15,15 @@ if TYPE_CHECKING:
 # this means that @enforce.enforce_types will see string as type. This is fine in
 # most cases. Especially for built in types.
 @enforce.enforce_types
-@dataclass(frozen=True)
+@dataclass(unsafe_hash=True)
 class Intensity(BaseIntValue):
     """Represents a intensity value from ``0`` to ``100``."""
 
     def __post_init__(self) -> None:
         check(
-            self.Value >= 0 and self.Value <= 100,
+            self.value >= 0 and self.value <= 100,
             f"{self}",
-            f"Value of {self.Value} is out of range. Value must be from 0 to 100.",
+            f"Value of {self.value} is out of range. Value must be from 0 to 100.",
         )
 
     def _from_int(self, int) -> Self:

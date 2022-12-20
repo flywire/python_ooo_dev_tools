@@ -2,6 +2,102 @@
 Version History
 ***************
 
+Version 0.8.3
+=============
+
+Many new Overloads in ``Calc`` module for range objects.
+
+Several enhancements for range objects.
+
+Version 0.8.2
+=============
+
+Added ``Calc.is_single_column_range()``.
+
+Added ``Calc.is_single_row_range()``.
+
+Added ``Calc.get_range_size()``
+
+Added ``Calc.get_range_obj()``
+
+Added ``Calc.get_selected_range()``
+
+Added ``Calc.get_selected_cell()``
+
+Many enhancements for working with sheet ranges.
+
+Version 0.8.1
+=============
+
+``Chart2.insert_chart()`` all parameters made optional, added ``chart_name`` parameter.
+
+Added ``Chart2.remove_chart()``.
+
+Added ``Calc.set_selected_addr()``.
+
+Updated ``Angle`` to accept any integer value, positive or negative.
+
+Version 0.8.0
+=============
+
+Added ``Calc.get_col_first_used_index()`` method.
+
+Added ``Calc.get_col_last_used_index()`` method.
+
+Added ``Calc.get_row_first_used_index()`` method.
+
+Added ``Calc.get_row_last_used_index()`` method.
+
+Added overloads to ``Calc.get_col()``.
+
+Added overloads to ``Calc.get_row()``.
+
+``Calc.get_col()`` now returns an empty list like ``Calc.get_row()`` if no values are found.
+In previous version it it returned ``None`` When no values were found.
+
+``Calc.extract_col()`` now returns an empty list if no values are found.
+In previous version it it returned ``None`` When no values were found.
+
+Version 0.7.1
+=============
+
+Minor updates to ``chart2_types`` module.
+
+Version 0.7.0
+=============
+
+Added ``Lo.loader_current``. Now after ``Lo.load_office()`` is called the ``Lo.loader_current`` property will contain the same loader that is returned by ``Lo.load_office()``
+
+All methods that are using ``loader`` now have a overload to make ``loader`` optional.
+
+``Calc.open_doc()`` has new overloads. Now if a file is not passed to open then a new spreadsheet document is returned.
+
+``Write.open_doc()`` has new overloads. Now if a file is not passed to open then a new Writer document is returned.
+
+Version 0.6.10
+==============
+
+Now ``Lo.load_load()`` has extra options that allow for turning on or off of verbose via the loader.
+Going forward verbose is off by default.
+
+Added overload to ``Calc.get_sheet()``
+
+Update ``Props.show_props()`` to support extra formatting.
+
+Fix bug in ``Calc.get_function_names()``
+
+Removed unnecessary events from
+
+.. cssclass:: ul-list
+
+    - ``Calc.print_addresses()``
+    - ``Calc.print_array()``
+    - ``Calc.print_cell_address()``
+    - ``Calc.print_fun_arguments()``
+    - ``Calc.print_function_info()``
+    - ``Calc.print_head_foot.print_address``
+    - ``Calc.print_head_foot``
+
 Version 0.6.9
 =============
 

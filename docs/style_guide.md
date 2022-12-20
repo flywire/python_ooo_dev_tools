@@ -89,6 +89,8 @@ See Also:
 
 ## List
 
+### General
+
 By default rdt-theme displays un-ordered list without any list type formating.
 To create an un-ordered list with bullets us the `ul-list` class from `readthedocs_custom.css`
 
@@ -114,6 +116,28 @@ Nested unordered list example. There needs to be a least two indents for nested 
     * outter item 2
     * outter itme 3
 ```
+
+### Multi-line list item
+
+Multi line example
+
+```rst
+1. | Database: for extracting information from Calc tables, where the data
+   | is organized into rows. The "Database" name is a little misleading,
+   | but the documentation makes the point that Calc database functions have
+   | nothing to do with Base databases. Chapter 13 of the Calc User
+   | Guide ("Calc as a Simple Database") explains the distinction in detail.
+2. Date and Time; :abbreviation:`i.e.` see the ``EASTERSUNDAY`` function below
+```
+
+Note There is custom `css` to go with multi line for margin.
+
+```css
+.rst-content li>.line-block {
+    margin-bottom: 0px;
+}
+```
+
 
 ## Image Classes
 
@@ -211,6 +235,8 @@ See src/conn/index.rst as an example
 .. spelling:word-list::
     conn
 ```
+
+`.. spelling:word-list::` can be at the end of a `rst` file.
 
 ## Abbreviations
 
@@ -564,3 +590,21 @@ See Also:
 ```
 
 See Also: [.. versionchanged](https://www.sphinx-doc.org/en/master/usage/restructuredtext/directives.html#directive-versionchanged)
+
+## SuperScript / SubScript
+
+Superscript
+
+```rst
+Their equations and |R2| values are printed as shown below:
+
+.. |R2| replace:: R\ :sup:`2`
+```
+
+Subscript example
+
+```rst
+He drank of the |H20| he could find.
+
+.. |H2O| replace:: H\ :sub:`2`\ O
+```
