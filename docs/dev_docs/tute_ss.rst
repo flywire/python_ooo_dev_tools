@@ -54,14 +54,13 @@ Once |odev| is installed, start up a python shell and enter the following code i
     .. code-tab:: python
 
         >>> from ooodev.utils.lo import Lo
-        >>> _ = Lo.load_office(Lo.ConnectSocket(headless=True, soffice="C:\\Program Files\\LibreOfficeDev 7\\program\\soffice.exe"))
+        >>> _ = Lo.load_office(Lo.ConnectSocket(headless=True))
         >>> from ooodev.office.calc import Calc
         >>> # do some work...
         >>> wb = Calc.create_doc()
         >>> Lo.close_doc(wb)
         >>> Lo.close_office()
         True
-
     .. only:: html
 
         .. cssclass:: tab-none
@@ -78,6 +77,9 @@ Once |odev| is installed, start up a python shell and enter the following code i
 .. tabs::
 
     .. code-tab:: python
+
+        from ooodev.office.calc import Calc
+        from ooodev.utils.lo import Lo
 
         def main() -> int:
             with Lo.Loader(Lo.ConnectSocket(headless=True)) as loader:
@@ -103,11 +105,13 @@ Note: Similar commands are used to open with GUI (not headless):
 
     .. code-tab:: python
 
+        >>> from ooodev.office.calc import Calc
         >>> from ooodev.utils.lo import Lo
-        >>> _ = Lo.load_office(Lo.ConnectSocket(soffice="C:\\Program Files\\LibreOfficeDev 7\\program\\soffice.exe"))
+        >>> _ = Lo.load_office(Lo.ConnectSocket())
+        >>> wb = Calc.create_doc()
         >>> from ooodev.utils.gui import GUI
-        >>> # after a document is instantiated...
         >>> GUI.set_visible(True)
+        >>> # switch to the open document and close LibreOffice
 
     .. only:: html
 
@@ -178,7 +182,7 @@ Once you’ve installed the |odev| package, you’ll be able to use the Calc cla
 
         >>> from ooodev.office.calc import Calc
         >>> from ooodev.utils.lo import Lo
-        >>> _ = Lo.load_office(Lo.ConnectSocket(headless=True, soffice="C:\\Program Files\\LibreOfficeDev 7\\program\\soffice.exe"))
+        >>> _ = Lo.load_office(Lo.ConnectSocket(headless=True))
         >>> wb = Calc.open_doc('example.xlsx')
         >>> type(wb)
         <class 'pyuno'>
@@ -214,12 +218,8 @@ Enter the following into the interactive shell:
         >>> Calc.get_sheet_name(ws)
         'Sheet3'
         >>> ws2 = Calc.get_active_sheet()
-        >>> Calc.get_sheet_name(ws2)
+        >>> Calc.get_sheet_name()
         'Sheet1'
-
-        >>> Lo.close_doc(wb)
-        >>> Lo.close_office()
-        True
 
     .. only:: html
 
@@ -244,13 +244,8 @@ Once you have a Worksheet object, you can access a Cell object using the Calc cl
 
     .. code-tab:: python
 
-        >>> from ooodev.office.calc import Calc
-        >>> from ooodev.utils.lo import Lo
-        >>>
-        >>> _ = Lo.load_office(Lo.ConnectSocket(soffice="C:\\Program Files\\LibreOfficeDev 7\\program\\soffice.exe"))
-        >>> wb = Calc.open_doc('example.xlsx')
         >>> from ooodev.utils.gui import GUI
-        >>> GUI.set_visible(is_visible=True, odoc=wb)
+        >>> GUI.set_visible(True)
         >>>
         >>> ws = Calc.get_sheet(doc=wb, sheet_name='Sheet1')
         >>>
@@ -277,9 +272,6 @@ Once you have a Worksheet object, you can access a Cell object using the Calc cl
         .. cssclass:: tab-none
 
             .. group-tab:: None
-
-
-
 
 The Cell object has a value property that contains, unsurprisingly, the value stored in that cell.
 There are many ways of referencing Cell objects, using the cell object, or the sheet with: cell address, cell name also have row, column, and coordinate properties that provide location information for the cell.
@@ -556,10 +548,10 @@ Open a new file editor tab and enter the following code. Save the file as ``read
         from ooodev.office.calc import Calc
         from ooodev.utils.gui import GUI
 
-        _ = Lo.load_office(Lo.ConnectSocket(soffice="C:\Program Files\LibreOfficeDev 7\program\soffice.exe"))
+        _ = Lo.load_office(Lo.ConnectSocket())
         print('Opening workbook...')
         wb = Calc.open_doc('censuspopdata.xlsx')
-        GUI.set_visible(is_visible=True, odoc=wb)
+        GUI.set_visible(True)
 
         sheet = Calc.get_sheet(doc=wb, sheet_name='Population by Census Tract')
         county_data = {}
@@ -781,11 +773,11 @@ You can download the complete program from `<https://nostarch.com/automatestuff2
         >>> from ooodev.utils.gui import GUI
         >>> from ooodev.utils.lo import Lo
         >>>
-        >>> _ = Lo.load_office(Lo.ConnectSocket(soffice="C:\\Program Files\\LibreOfficeDev 7\\program\\soffice.exe"))
+        >>> _ = Lo.load_office(Lo.ConnectSocket())
         >>> print('Opening workbook...')
         Opening workbook...
         >>> wb = Calc.open_doc('censuspopdata.xlsx')
-        >>> GUI.set_visible(is_visible=True, odoc=wb)
+        >>> GUI.set_visible(True)
         >>>
         >>> sheet = Calc.get_sheet(doc=wb, sheet_name='Population by Census Tract')
         >>> county_data = {}
@@ -812,7 +804,7 @@ You can download the complete program from `<https://nostarch.com/automatestuff2
         >>> # Open a new text file and write the contents of county_data to it.
         >>> print('Writing results...')
         Writing results...
-        >>> result_file = open('census2010B.py', 'w')
+        >>> result_file = open('census2010.py', 'w')
         >>> import pprint
         >>> result_file.write('allData = ' + pprint.pformat(county_data))
         152237
@@ -874,7 +866,7 @@ Enter the following into the interactive shell:
 
         >>> from ooodev.office.calc import Calc
         >>> from ooodev.utils.lo import Lo
-        >>> _ = Lo.load_office(Lo.ConnectSocket(headless=True, soffice="C:\Program Files\LibreOfficeDev 7\program\soffice.exe"))
+        >>> _ = Lo.load_office(Lo.ConnectSocket(headless=True))
         >>>
         >>> wb = Calc.create_doc()
         >>> ws = Calc.get_sheet(wb)
@@ -911,7 +903,7 @@ Enter the following into the interactive shell (with ``example.xlsx`` in the cur
 
         >>> from ooodev.office.calc import Calc
         >>> from ooodev.utils.lo import Lo
-        >>> _ = Lo.load_office(Lo.ConnectSocket(headless=True, soffice="C:\Program Files\LibreOfficeDev 7\program\soffice.exe"))
+        >>> _ = Lo.load_office(Lo.ConnectSocket(headless=True))
         >>>
         >>> wb = Calc.open_doc('example.xlsx')
         >>> ws = Calc.get_sheet()
@@ -948,7 +940,7 @@ Enter the following into the interactive shell:
 
         >>> from ooodev.office.calc import Calc
         >>> from ooodev.utils.lo import Lo
-        >>> _ = Lo.load_office(Lo.ConnectSocket(headless=True, soffice="C:\Program Files\LibreOfficeDev 7\program\soffice.exe"))
+        >>> _ = Lo.load_office(Lo.ConnectSocket(headless=True))
         >>>
         >>> wb = Calc.create_doc()
         Creating Office document scalc
@@ -1016,7 +1008,7 @@ Enter this into the interactive shell:
 
         >>> from ooodev.office.calc import Calc
         >>> from ooodev.utils.lo import Lo
-        >>> _ = Lo.load_office(Lo.ConnectSocket(headless=True, soffice="C:\Program Files\LibreOfficeDev 7\program\soffice.exe"))
+        >>> _ = Lo.load_office(Lo.ConnectSocket(headless=True))
         >>>
         >>> wb = Calc.create_doc()
         Creating Office document scalc
@@ -1243,9 +1235,9 @@ Enter the following into the interactive shell:
         >>> from ooodev.utils.gui import GUI
         >>> from ooodev.utils.lo import Lo
         >>>
-        >>> _ = Lo.load_office(Lo.ConnectSocket(soffice="C:\Program Files\LibreOfficeDev 7\program\soffice.exe"))
+        >>> _ = Lo.load_office(Lo.ConnectSocket())
         >>> doc = Calc.create_doc()
-        >>> GUI.set_visible(is_visible=True, odoc=doc)
+        >>> GUI.set_visible(True)
         >>> sheet = Calc.get_sheet(doc=doc)
         >>> for i in range(1, 6): # create some data in column A
         ...     Calc.set_val(i, sheet, 'A'+str(i))
@@ -1312,9 +1304,9 @@ The cell value is then set which demonstrates the new style, and the process is 
         >>> from ooodev.utils.gui import GUI
         >>> from ooodev.utils.lo import Lo
         >>>
-        >>> _ = Lo.load_office(Lo.ConnectSocket(soffice="C:\Program Files\LibreOfficeDev 7\program\soffice.exe"))
+        >>> _ = Lo.load_office(Lo.ConnectSocket())
         >>> doc = Calc.create_doc()
-        >>> GUI.set_visible(is_visible=True, odoc=doc)
+        >>> GUI.set_visible(True)
         >>> sheet = Calc.get_sheet(doc=doc)
 
         >>> from ooodev.utils.props import Props
@@ -1421,9 +1413,9 @@ See also :ref:`ch20_storing_2d_arrays`.
         >>> from ooodev.utils.gui import GUI
         >>> from ooodev.utils.lo import Lo
         >>>
-        >>> _ = Lo.load_office(Lo.ConnectSocket(soffice="C:\Program Files\LibreOfficeDev 7\program\soffice.exe"))
+        >>> _ = Lo.load_office(Lo.ConnectSocket())
         >>> doc = Calc.create_doc()
-        >>> GUI.set_visible(is_visible=True, odoc=doc)
+        >>> GUI.set_visible(True)
         >>> sheet = Calc.get_sheet(doc=doc)
         >>> Calc.set_val(sheet=sheet, cell_name='A1', value=200)
         >>> Calc.set_val(sheet=sheet, cell_name='A2', value=300)
@@ -1486,18 +1478,18 @@ Enter this into the interactive shell:
         >>> from ooodev.utils.gui import GUI
         >>> from ooodev.utils.lo import Lo
         >>>
-        >>> _ = Lo.load_office(Lo.ConnectSocket(soffice="C:\Program Files\LibreOfficeDev 7\program\soffice.exe"))
+        >>> _ = Lo.load_office(Lo.ConnectSocket())
         >>> doc = Calc.create_doc()
-        >>> GUI.set_visible(is_visible=True, odoc=doc)
-        >>> sheet = Calc.get_sheet(doc=doc)
-        >>> Calc.set_val(sheet=sheet, cell_name='A1', value='Tall row')
-        >>> Calc.set_val(sheet=sheet, cell_name='B2', value='Wide column',)
+        >>> GUI.set_visible(True)
+        >>> sheet = Calc.get_sheet(doc)
+        >>> Calc.set_val('Tall row', sheet, 'A1')
+        >>> Calc.set_val('Wide column', sheet, 'B2')
         >>> # Set the height and width:
-        >>> _ = Calc.set_row_height(sheet=sheet, height=70, idx=0)
-        >>> _ = Calc.set_col_width(sheet=sheet, width=40, idx=1)
+        >>> _ = Calc.set_row_height(sheet, 70, 0)
+        >>> _ = Calc.set_col_width(sheet, 40, 1)
         >>> _ = Calc.save_doc(doc, 'dimensions.xlsx')
         >>> # check file
-        >>> Lo.close_doc(doc=doc)
+        >>> Lo.close_doc(doc)
         >>> _ = Lo.close_office()
 
     .. only:: html
@@ -1553,9 +1545,9 @@ Enter the following into the interactive shell:
         >>> from ooodev.utils.gui import GUI
         >>> from ooodev.utils.lo import Lo
         >>>
-        >>> _ = Lo.load_office(Lo.ConnectSocket(soffice="C:\Program Files\LibreOfficeDev 7\program\soffice.exe"))
+        >>> _ = Lo.load_office(Lo.ConnectSocket())
         >>> doc = Calc.create_doc()
-        >>> GUI.set_visible(is_visible=True, odoc=doc)
+        >>> GUI.set_visible(True)
         >>> sheet = Calc.get_sheet(doc=doc)
         >>>
         >>> # Merge first few cells of the last row
@@ -1668,9 +1660,9 @@ Then enter the following into the interactive shell:
         >>> from ooodev.utils.gui import GUI
         >>> from ooodev.utils.lo import Lo
         >>>
-        >>> _ = Lo.load_office(Lo.ConnectSocket(soffice="C:\Program Files\LibreOfficeDev 7\program\soffice.exe"))
+        >>> _ = Lo.load_office(Lo.ConnectSocket())
         >>> doc = Calc.open_doc('produceSales.xlsx')
-        >>> GUI.set_visible(is_visible=True, odoc=doc)
+        >>> GUI.set_visible(True)
         >>> sheet = Calc.get_sheet(doc=doc)
         >>> Calc.goto_cell(cell_name="A1", doc=doc) # activate reference row
         >>> Calc.freeze_rows(doc=doc, num_rows=1)   # freeze one row before reference
@@ -1742,9 +1734,9 @@ Enter this interactive shell example to create a bar chart and add it to the spr
         >>> from ooodev.utils.gui import GUI
         >>> from ooodev.utils.lo import Lo
         >>>
-        >>> _ = Lo.load_office(connector=Lo.ConnectPipe(soffice="C:\\Program Files\\LibreOfficeDev 7\\program\\soffice.exe"))
+        >>> _ = Lo.load_office(connector=Lo.ConnectPipe())
         >>> doc = Calc.create_doc()
-        >>> GUI.set_visible(is_visible=True, odoc=doc)
+        >>> GUI.set_visible(True)
         >>> sheet = Calc.get_sheet(doc=doc)
         >>> for i in range(1, 11): # create some data in column A
         ...     Calc.set_val(i, sheet, 'A' + str(i))
@@ -1758,13 +1750,10 @@ Enter this interactive shell example to create a bar chart and add it to the spr
         ... )
         >>> Calc.goto_cell(cell_name="A1", doc=doc)
         >>> _ = Chart2.set_title(chart_doc=chart_doc, title="My Chart")
-        >>> Chart2
-        <class 'ooodev.office.chart2.Chart2'>
-        >>> Calc.save_doc(doc, "sampleChart.xlsx")
-        True
+        >>> _ = Chart2
+        >>> _ = Calc.save_doc(doc, "sampleChart.xlsx")
         >>> Lo.close_doc(doc)
-        >>> Lo.close_office()
-        True
+        >>> _ = Lo.close_office()
 
     .. only:: html
 
