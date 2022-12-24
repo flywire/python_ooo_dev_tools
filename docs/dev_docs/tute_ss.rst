@@ -857,7 +857,7 @@ With Python, it’s simple to create spreadsheets with thousands of rows of data
 Creating and Saving Spreadsheet Documents
 -----------------------------------------
 
-Start a lo instance and use the Calc create_doc class to create a new, blank Workbook object.
+Start |odev| and use the Calc :py:meth:`~.Calc.open_doc` method to create a new, blank Workbook object.
 Enter the following into the interactive shell:
 
 .. tabs::
@@ -869,20 +869,14 @@ Enter the following into the interactive shell:
         >>> _ = Lo.load_office(Lo.ConnectSocket(headless=True))
         >>>
         >>> wb = Calc.create_doc()
+        >>> Calc.get_sheet_name()
+        'Sheet1'
         >>> ws = Calc.get_sheet(wb)
-        >>> Calc.get_sheet_name()
-        'Sheet1'
-        >>> Calc.set_sheet_name(ws, 'Spam Bacon Eggs Sheet')
-        True
-        >>> Calc.get_sheet_name()
-        'Sheet1'
+        >>> Calc.get_sheet_names(wb)
+        ('Sheet1',)
+        >>> _ = Calc.set_sheet_name(ws, 'Spam Bacon Eggs Sheet')
         >>> Calc.get_sheet_names(wb)
         ('Spam Bacon Eggs Sheet',)
-        True
-        >>>
-        >>> Lo.close_doc(wb)
-        >>> Lo.close_office()
-        True
 
     .. only:: html
 
@@ -890,9 +884,8 @@ Enter the following into the interactive shell:
 
             .. group-tab:: None
 
-
-The workbook will start off with a single sheet named Sheet.
-You can change the name of the sheet using the :py:meth:`.Calc.set_sheet_name` method which stores a new string in its title property.
+The workbook will start off with a single sheet named Sheet1.
+You can change the name of the sheet using the :py:meth:`.Calc.set_sheet_name` method which changes the sheet name propety.
 
 Any time you modify the Workbook object or its sheets and cells, the spreadsheet file will not be saved until you call the :py:meth:`.Calc.save_doc` workbook method.
 Enter the following into the interactive shell (with ``example.xlsx`` in the current working directory):
@@ -901,18 +894,13 @@ Enter the following into the interactive shell (with ``example.xlsx`` in the cur
 
     .. code-tab:: python
 
-        >>> from ooodev.office.calc import Calc
-        >>> from ooodev.utils.lo import Lo
-        >>> _ = Lo.load_office(Lo.ConnectSocket(headless=True))
-        >>>
         >>> wb = Calc.open_doc('example.xlsx')
-        >>> ws = Calc.get_sheet()
-        >>> Calc.set_sheet_name(ws, 'Spam Spam Spam')
-        True
+        >>> ws = Calc.get_sheet(wb)
+        >>> _ = Calc.set_sheet_name(ws, 'Spam Spam Spam')
+        >>> Calc.get_sheet_names(wb)
+        ('Spam Spam Spam', 'Sheet2', 'Sheet3')
         >>> Calc.save_doc(wb, 'example_copy.xlsx')
-        >>>
-        >>> Lo.close_doc(wb)
-        >>> Lo.close_office()
+        True
 
     .. only:: html
 
@@ -938,22 +926,17 @@ Enter the following into the interactive shell:
 
     .. code-tab:: python
 
-        >>> from ooodev.office.calc import Calc
-        >>> from ooodev.utils.lo import Lo
-        >>> _ = Lo.load_office(Lo.ConnectSocket(headless=True))
-        >>>
         >>> wb = Calc.create_doc()
-        Creating Office document scalc
         >>> ws = Calc.get_sheet(doc=wb, index=0)
         >>> Calc.get_sheet_names(wb)
         ('Sheet1',)
-        >>> Calc.insert_sheet(wb, 'Sheet2', 1)
+        >>> _ = Calc.insert_sheet(wb, 'Sheet2', 1)
         >>> Calc.get_sheet_names(wb)
         ('Sheet1', 'Sheet2')
-        >>> Calc.insert_sheet(wb, 'First Sheet', 0)
+        >>> _ = Calc.insert_sheet(wb, 'First Sheet', 0)
         >>> Calc.get_sheet_names(wb)
         ('First Sheet', 'Sheet1', 'Sheet2')
-        >>> Calc.insert_sheet(wb, 'Middle Sheet', 2)
+        >>> _ = Calc.insert_sheet(wb, 'Middle Sheet', 2)
         >>> Calc.get_sheet_names(wb)
         ('First Sheet', 'Sheet1', 'Middle Sheet', 'Sheet2')
 
@@ -974,14 +957,10 @@ Continue the previous example by entering the following:
 
         >>> Calc.get_sheet_names(wb)
         ('First Sheet', 'Sheet1', 'Middle Sheet', 'Sheet2')
-        >>> Calc.remove_sheet(wb, 'Middle Sheet')
-        True
-        >>> Calc.remove_sheet(wb, 'Sheet2')
-        True
+        >>> _ = Calc.remove_sheet(wb, 'Middle Sheet')
+        >>> _ = Calc.remove_sheet(wb, 'Sheet2')
         >>> Calc.get_sheet_names(wb)
         ('First Sheet', 'Sheet1')
-        >>> Lo.close_doc(wb)
-        >>> Lo.close_office()
 
     .. only:: html
 
@@ -999,25 +978,21 @@ Remember to call the :py:meth:`.Calc.save_doc` method to save the changes after 
 Writing Values to Cells
 -----------------------
 
-Writing values to cells is much like writing values to keys in a dictionary.
+Writing values to cells is much like writing values to keys in a dictionary. [??? Check this. ???]
 Enter this into the interactive shell:
 
 .. tabs::
 
     .. code-tab:: python
 
-        >>> from ooodev.office.calc import Calc
-        >>> from ooodev.utils.lo import Lo
-        >>> _ = Lo.load_office(Lo.ConnectSocket(headless=True))
-        >>>
         >>> wb = Calc.create_doc()
-        Creating Office document scalc
-        >>> ws = Calc.get_sheet(doc=wb, index=0)
+        >>> ws = Calc.get_sheet(wb, 0)
         >>> Calc.set_val('Hello, world!', ws, 'A1')
         >>> Calc.get_string(ws, 'A1')
         'Hello, world!'
+        >>>
         >>> Lo.close_doc(wb)
-        >>> Lo.close_office()
+        >>> _ = Lo.close_office()
 
     .. only:: html
 
@@ -1249,7 +1224,7 @@ Enter the following into the interactive shell:
         >>> cell = Calc.get_cell(sheet, 'A1')
         >>> Props.set(cell, CharPosture=FontSlant.ITALIC, CharWeight=FontWeight.BOLD, CharHeight=24,)
         >>> _ = Calc.save_doc(doc, "sampleChart.xlsx")
-        >>> # check file
+        >>> # Check
         >>> Lo.close_doc(doc)
         >>> _ = Lo.close_office()
 
@@ -1331,7 +1306,7 @@ The cell value is then set which demonstrates the new style, and the process is 
         >>> Calc.set_val('24 pt Italic', sheet, 'B3')
         >>> _ = Calc.save_doc(doc, "styles.xlsx")
 
-        >>> # check file
+        >>> # Check
         >>> Lo.close_doc(doc=doc)
         >>> _ = Lo.close_office()
 
@@ -1421,7 +1396,7 @@ See also :ref:`ch20_storing_2d_arrays`.
         >>> Calc.set_val(sheet=sheet, cell_name='A2', value=300)
         >>> Calc.set_val(sheet=sheet, cell_name="A3", value="=SUM(A1:A2)") # Set the formula
         >>> _ = Calc.save_doc(doc, "writeFormula.xlsx")
-        >>> # check file
+        >>> # Check
         >>> Lo.close_doc(doc=doc)
         >>> _ = Lo.close_office()
 
@@ -1488,7 +1463,7 @@ Enter this into the interactive shell:
         >>> _ = Calc.set_row_height(sheet, 70, 0)
         >>> _ = Calc.set_col_width(sheet, 40, 1)
         >>> _ = Calc.save_doc(doc, 'dimensions.xlsx')
-        >>> # check file
+        >>> # Check
         >>> Lo.close_doc(doc)
         >>> _ = Lo.close_office()
 
@@ -1597,7 +1572,7 @@ Enter this into the interactive shell:
         >>> cell_range = Calc.get_cell_range(sheet, 'A1:D3')
         >>> Lo.qi(XMergeable, cell_range, True).merge(False)
         >>> _ = Calc.save_doc(doc, 'merged.xlsx')
-        >>> # check file
+        >>> # Check
         >>> Lo.close_doc(doc=doc)
         >>> _ = Lo.close_office()
 
